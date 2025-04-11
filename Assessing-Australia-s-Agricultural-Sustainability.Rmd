@@ -1,0 +1,1102 @@
+---
+title: "Assessing Australia's Agricultural Sustainability in the Context of Global Climate Change Indicators"
+author: "Shevindi Basthian Koralalge"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+always_allow_html: true
+fig_caption: yes
+bibliography: ref_text.bib
+urlcolor: blue
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Abstract
+Australia's agricultural industry is vital to the country's trade, food security, and economy. However, the effects of climate change present serious difficulties for it. The critical challenge of evaluating Australia's agricultural sustainability in light of global climate change indicators is covered in this report.This analysis reviewed Australian agricultural sustainability in relation to global climate change indicators, involving data preprocessing and Exploratory Data Analysis (EDA) to identify significant correlations between agricultural and environmental indicators, addressing missing values and eliminating unnecessary columns.This analysis reviewed Australian agricultural sustainability in relation to global climate change indicators, involving data preprocessing and Exploratory Data Analysis (EDA) to identify significant correlations between agricultural and environmental indicators, addressing missing values and eliminating unnecessary columns.The study used regression analyses and clustering analysis to evaluate the impact of factors on agricultural land. Australia was placed in Cluster 2, indicating potential sustainability concerns. Principal Component Analysis was used to reduce data dimensionality. However, the analysis has limitations as it needs further research. The findings and achievements of this study can inform strategies and aimed at promoting agricultural sustainability in the face of climate change in Australia.
+
+
+
+## Introduction
+
+For the economy, food security, and international trade of Australia, the agricultural sector is essential. However, it faces a significant challenge in the form of climate change, which introduces uncertainty and potential disruptions to traditional farming practices. This report explores into the critical task of assessing Australia's agricultural sustainability in the context of global climate change indicators. It is essential to comprehend how climate change affects agriculture and to assess sustainable strategies in order to guarantee a resilient and adaptable farming industry.
+Climate change has emerged as a major global concern, affecting many industries, including agriculture. A significant threat to agricultural productivity is the changing climate, which is characterized by rising temperatures, changed rainfall patterns, and increased climate variability. Extreme weather events such as droughts and floods, which are caused by climate change, make farming in Australia more difficult.
+The Australian agricultural sector is vulnerable to climate change-related uncertainties, such as temperature variations, rainfall shifts, and extreme heat, CO2 and other gas emissions which can impact crop yields, farm profitability, and disrupt farmers' livelihoods. The report explores the impact of these uncertainties and understanding their behavior on Australian agriculture. This highlights the need to tailor strategies and adaptation measures to specific areas, taking into consideration both the challenges and opportunities posed by climate change indicators. The objectives of the report are to evaluate climate change indicators, compare and contrast the climate change indicators in the context of several countries with Australia.
+
+
+## Data
+
+#### Data Source
+Climate change is a defining issue of our age(Climate Change, n.d.).The dataset used in this study was obtained from the World Bank Group is a global partnership comprising five related institutions working for sustainable solutions that reduce poverty and build shared prosperity in developing countries(Who We Are, n.d.).The data was collected with the World Bank's intention of to go further in helping countries reduce poverty and rise to the challenges of climate change(Climate Change, n.d.).
+
+The variables (columns) correspond to country characteristics or indicators gathered by the World Bank and classified as important to climate change. Every record (row) is associated with a particular country. This data collection is cross-sectional rather than longitudinal, despite the fact that most of studies on climate change focuses on how things are changing over time. It is a snapshot of one particular recent value for each of these attributes for each country. 
+
+#### Data Description
+The dataset contains a set of variables, each representing specific climate related indicators.The dataset includes records for various countries, where each record provides information relevant to these indicators.
+
+```{r, echo=FALSE}
+#Load dataset
+climateData <- read.csv("wbcc_bc.csv", header = TRUE)
+#no of rows
+cat("Number of Records (Rows):", nrow(climateData), "\n")
+#no of columns
+cat("Number of Variables(Columns)):", ncol(climateData), "\n")
+
+```
+These variables contain both character and numerical data.Each record of the dataset represent a specific country.Each value of the dataset is the most recent value of that indicator available for that country between 2001 and 2020.
+The dataset is summarised in Table 1 below.
+
+```{r, echo=FALSE}
+# Load necessary libraries
+library(dplyr)
+library(knitr)
+#install.packages("kableExtra")
+library(kableExtra)
+#install.packages("corrplot")
+library(corrplot)
+
+# Extract variable names, types, and descriptions (add descriptions manually)
+variable_names <- names(climateData)
+variable_types <- sapply(climateData, class)
+
+# Check for missing values and count them
+missing_counts <- sapply(climateData, function(x) sum(is.na(x)))
+
+# Create a data frame or tibble to store the information
+variable_info <- data.frame(
+  Variable = variable_names,
+  Description = c("Country code",
+                  "Country",
+                  "Agricultural land refers to the share of land area that is arable, under permanent crops, and under permanent pastures. Arable land includes land defined by the FAO as land under temporary crops (double-cropped areas are counted once), temporary meadows for mowing or for pasture, land under market or kitchen gardens, and land temporarily fallow. Land abandoned as a result of shifting cultivation is excluded. Land under permanent crops is land cultivated with crops that occupy the land for long periods and need not be replanted after each harvest, such as cocoa, coffee, and rubber. This category includes land under flowering shrubs, fruit trees, nut trees, and vines, but excludes land under trees grown for wood or timber. Permanent pasture is land used for five or more years for forage, including natural and cultivated crops.",
+                  "Agricultural land refers to the share of land area that is arable, under permanent crops, and under permanent pastures. Arable land includes land defined by the FAO as land under temporary crops (double-cropped areas are counted once), temporary meadows for mowing or for pasture, land under market or kitchen gardens, and land temporarily fallow. Land abandoned as a result of shifting cultivation is excluded. Land under permanent crops is land cultivated with crops that occupy the land for long periods and need not be replanted after each harvest, such as cocoa, coffee, and rubber. This category includes land under flowering shrubs, fruit trees, nut trees, and vines, but excludes land under trees grown for wood or timber. Permanent pasture is land used for five or more years for forage, including natural and cultivated crops.",
+                  "Arable land includes land defined by the FAO as land under temporary crops (double-cropped areas are counted once), temporary meadows for mowing or for pasture, land under market or kitchen gardens, and land temporarily fallow. Land abandoned as a result of shifting cultivation is excluded.",
+  "Rural land area below 5m is the total rural land area in square kilometers where the elevation is 5 meters or less.",
+  "Rural land area below 5m is the percentage of total land where the rural land elevation is 5 meters or less.",
+  "Urban land area below 5m is the total urban land area in square kilometers where the elevation is 5 meters or less.",
+  "Urban land area below 5m is the percentage of total land where the urban land elevation is 5 meters or less.",
+  "Land area below 5m is the percentage of total land where the elevation is 5 meters or less.",
+  "Forest area is land under natural or planted stands of trees of at least 5 meters in situ, whether productive or not, and excludes tree stands in agricultural production systems (for example, in fruit plantations and agroforestry systems) and trees in urban parks and gardens.",
+  "Forest area is land under natural or planted stands of trees of at least 5 meters in situ, whether productive or not, and excludes tree stands in agricultural production systems (for example, in fruit plantations and agroforestry systems) and trees in urban parks and gardens.",
+  "Agricultural irrigated land refers to agricultural areas purposely provided with water, including land irrigated by controlled flooding.",
+  "Average precipitation is the long-term average in depth (over space and time) of annual precipitation in the country. Precipitation is defined as any kind of water that falls from clouds as a liquid or a solid.",
+  "Cereal yield, measured as kilograms per hectare of harvested land, includes wheat, rice, maize, barley, oats, rye, millet, sorghum, buckwheat, and mixed grains. Production data on cereals relate to crops harvested for dry grain only. Cereal crops harvested for hay or harvested green for food, feed, or silage and those used for grazing are excluded. The FAO allocates production data to the calendar year in which the bulk of the harvest took place. Most of a crop harvested near the end of a year will be used in the following year.","Foreign direct investment, net inflows (% of GDP)",
+  "Foreign direct investment are the net inflows of investment to acquire a lasting management interest (10 percent or more of voting stock) in an enterprise operating in an economy other than that of the investor. It is the sum of equity capital, reinvestment of earnings, other long-term capital, and short-term capital as shown in the balance of payments. This series shows net inflows (new investment inflows less disinvestment) in the reporting economy from foreign investors, and is divided by GDP.",
+  "Access to electricity is the percentage of population with access to electricity. Electrification data are collected from industry, national surveys and international sources.",
+"Sources of electricity refer to the inputs used to generate electricity. Coal refers to all coal and brown coal, both primary (including hard coal and lignite-brown coal) and derived fuels (including patent fuel, coke oven coke, gas coke, coke oven gas, and blast furnace gas). Peat is also included in this category.",
+  "Sources of electricity refer to the inputs used to generate electricity. Hydropower refers to electricity produced by hydroelectric power plants.",
+  "Sources of electricity refer to the inputs used to generate electricity. Gas refers to natural gas but excludes natural gas liquids.",
+  "Sources of electricity refer to the inputs used to generate electricity. Nuclear power refers to electricity produced by nuclear power plants.",
+  "Sources of electricity refer to the inputs used to generate electricity. Oil refers to crude oil and petroleum products.",
+  "Renewable electricity is the share of electricity generated by renewable power plants in total electricity generated by all types of plants.",
+  "Electricity production from renewable sources, excluding hydroelectric, includes geothermal, solar, tides, wind, biomass, and biofuels.",
+  "Electricity production from renewable sources, excluding hydroelectric, includes geothermal, solar, tides, wind, biomass, and biofuels.",
+  "Renewable energy consumption is the share of renewables energy in total final energy consumption.",
+  "Energy use per PPP GDP is the kilogram of oil equivalent of energy use per constant PPP GDP. Energy use refers to the use of primary energy before transformation to other end-use fuels, which is equal to indigenous production plus imports and stock changes, minus exports and fuels supplied to ships and aircraft engaged in international transport. PPP GDP is gross domestic product converted to 2017 constant international dollars using purchasing power parity rates. An international dollar has the same purchasing power over GDP as a U.S. dollar has in the United States.",
+  "Electric power consumption measures the production of power plants and combined heat and power plants less transmission, distribution, and transformation losses and own use by heat and power plants.",
+  "Energy use refers to the use of primary energy before transformation to other end-use fuels, which is equal to indigenous production plus imports and stock changes, minus exports and fuels supplied to ships and aircraft engaged in international transport.",
+  "Carbon dioxide emissions from solid fuel consumption refer mainly to emissions from use of coal as an energy source.",
+  "Carbon dioxide emissions from liquid fuel consumption refer mainly to emissions from use of natural gas as an energy source.",
+  "Carbon dioxide emissions are those stemming from the burning of fossil fuels and the manufacture of cement. They include carbon dioxide produced during consumption of solid, liquid, and gas fuels and gas flaring.",
+"Carbon dioxide emissions are those stemming from the burning of fossil fuels and the manufacture of cement. They include carbon dioxide produced during consumption of solid, liquid, and gas fuels and gas flaring.",
+  "Carbon dioxide emissions from liquid fuel consumption refer mainly to emissions from use of petroleum-derived fuels as an energy source.",
+"Carbon dioxide emissions from liquid fuel consumption refer mainly to emissions from use of petroleum-derived fuels as an energy source.",
+  "Carbon dioxide emissions are those stemming from the burning of fossil fuels and the manufacture of cement. They include carbon dioxide produced during consumption of solid, liquid, and gas fuels and gas flaring.",
+  "Carbon dioxide emissions are those stemming from the burning of fossil fuels and the manufacture of cement. They include carbon dioxide produced during consumption of solid, liquid, and gas fuels and gas flaring.",
+"Carbon dioxide emissions are those stemming from the burning of fossil fuels and the manufacture of cement. They include carbon dioxide produced during consumption of solid, liquid, and gas fuels and gas flaring.",
+  "Carbon dioxide emissions from solid fuel consumption refer mainly to emissions from use of coal as an energy source.",
+  "Carbon dioxide emissions from solid fuel consumption refer mainly to emissions from use of coal as an energy source.",
+  "Other greenhouse gas emissions are by-product emissions of hydrofluorocarbons, perfluorocarbons, and sulfur hexafluoride.",
+  "Other greenhouse gas emissions are by-product emissions of hydrofluorocarbons, perfluorocarbons, and sulfur hexafluoride. Each year of data shows the percentage change to that year from 1990.",
+  "Total greenhouse gas emissions in kt of CO2 equivalent are composed of CO2 totals excluding short-cycle biomass burning (such as agricultural waste burning and savanna burning) but including other biomass burning (such as forest fires, post-burn decay, peat fires and decay of drained peatlands), all anthropogenic CH4 sources, N2O sources and F-gases (HFCs, PFCs and SF6).",
+  "Total greenhouse gas emissions are composed of CO2 totals excluding short-cycle biomass burning (such as agricultural waste burning and savanna burning) but including other biomass burning (such as forest fires, post-burn decay, peat fires and decay of drained peatlands), all anthropogenic CH4 sources, N2O sources and F-gases (HFCs, PFCs and SF6). Each year of data shows the percentage change to that year from 1990.",
+  "Hydrofluorocarbons, used as a replacement for chlorofluorocarbons, are used mainly in refrigeration and semiconductor manufacturing.",
+  "Methane emissions are those stemming from human activities such as agriculture and from industrial methane production.",
+  "Methane emissions are those stemming from human activities such as agriculture and from industrial methane production. Each year of data shows the percentage change to that year from 1990.",
+  "Nitrous oxide emissions are emissions from agricultural biomass burning, industrial activities, and livestock management.",
+  "Nitrous oxide emissions are emissions from agricultural biomass burning, industrial activities, and livestock management. Each year of data shows the percentage change to that year from 1990.",
+  "Perfluorocarbons, used as a replacement for chlorofluorocarbons in manufacturing semiconductors, are a byproduct of aluminum smelting and uranium enrichment.",
+  "Sulfur hexafluoride is used largely to insulate high-voltage electric power equipment.",
+  "Disaster risk reduction progress score is an average of self-assessment scores, ranging from 1 to 5, submitted by countries under Priority 1 of the Hyogo Framework National Progress Reports. The Hyogo Framework is a global blueprint for disaster risk reduction efforts that was adopted by 168 countries in 2005. Assessments of 'Priority 1' include four indicators that reflect the degree to which countries have prioritized disaster risk reduction and the strengthening of relevant institutions.",
+  "GHG net emissions/removals by LUCF refers to changes in atmospheric levels of all greenhouse gases attributable to forest and land-use change activities, including but not limited to (1) emissions and removals of CO2 from decreases or increases in biomass stocks due to forest management, logging, fuelwood collection, etc.; (2) conversion of existing forests and natural grasslands to other land uses; (3) removal of CO2 from the abandonment of formerly managed lands (e.g. croplands and pastures); and (4) emissions and removals of CO2 in soil associated with land-use change and management. For Annex-I countries under the UNFCCC, these data are drawn from the annual GHG inventories submitted to the UNFCCC by each country; for non-Annex-I countries, data are drawn from the most recently submitted National Communication where available. Because of differences in reporting years and methodologies, these data are not generally considered comparable across countries. Data are in million metric tons.",
+  "Droughts, floods, and extreme temperatures are the annual average percentage of the population that is affected by natural disasters classified as either droughts, floods, or extreme temperature events. A drought is an extended period of time characterized by a deficiency in a region's water supply that is the result of constantly below average precipitation. A drought can lead to losses to agriculture, affect inland navigation and hydropower plants, and cause a lack of drinking water and famine. A flood is a significant rise of water level in a stream, lake, reservoir or coastal region. Extreme temperature events are either cold waves or heat waves. A cold wave can be both a prolonged period of excessively cold weather and the sudden invasion of very cold air over a large area. Along with frost it can cause damage to agriculture, infrastructure, and property. A heat wave is a prolonged period of excessively hot and sometimes also humid weather relative to normal climate patterns of a certain region. Population affected is the number of people injured, left homeless or requiring immediate assistance during a period of emergency resulting from a natural disaster; it can also include displaced or evacuated people. Average percentage of population affected is calculated by dividing the sum of total affected for the period stated by the sum of the annual population figures for the period stated.",
+  "Rural population below 5m is the percentage of the total population, living in areas where the elevation is 5 meters or less.",
+  "Urban population below 5m is the percentage of the total population, living in areas where the elevation is 5 meters or less.",
+  "Population below 5m is the percentage of the total population living in areas where the elevation is 5 meters or less.",
+  "Population in urban agglomerations of more than one million is the percentage of a country's population living in metropolitan areas that in 2018 had a population of more than one million people.",
+  "Annual freshwater withdrawals refer to total water withdrawals, not counting evaporation losses from storage basins. Withdrawals also include water from desalination plants in countries where they are a significant source. Withdrawals can exceed 100 percent of total renewable resources where extraction from nonrenewable aquifers or desalination plants is considerable or where there is significant water reuse. Withdrawals for agriculture and industry are total withdrawals for irrigation and livestock production and for direct industrial use (including withdrawals for cooling thermoelectric plants). Withdrawals for domestic uses include drinking water, municipal use or supply, and use for public services, commercial establishments, and homes. Data are for the most recent year available for 1987-2002.",
+  "Annual freshwater withdrawals refer to total water withdrawals, not counting evaporation losses from storage basins. Withdrawals also include water from desalination plants in countries where they are a significant source. Withdrawals can exceed 100 percent of total renewable resources where extraction from nonrenewable aquifers or desalination plants is considerable or where there is significant water reuse. Withdrawals for agriculture and industry are total withdrawals for irrigation and livestock production and for direct industrial use (including withdrawals for cooling thermoelectric plants). Withdrawals for domestic uses include drinking water, municipal use or supply, and use for public services, commercial establishments, and homes. Data are for the most recent year available for 1987-2002.",
+  "Terrestrial protected areas are totally or partially protected areas of at least 1,000 hectares that are designated by national authorities as scientific reserves with limited public access, national parks, natural monuments, nature reserves or wildlife sanctuaries, protected landscapes, and areas managed mainly for sustainable use. Marine areas, unclassified areas, littoral (intertidal) areas, and sites protected under local or provincial law are excluded.",
+  "Marine protected areas are areas of intertidal or subtidal terrain--and overlying water and associated flora and fauna and historical and cultural features--that have been reserved by law or other effective means to protect part or all of the enclosed environment.",
+  "Terrestrial protected areas are totally or partially protected areas of at least 1,000 hectares that are designated by national authorities as scientific reserves with limited public access, national parks, natural monuments, nature reserves or wildlife sanctuaries, protected landscapes, and areas managed mainly for sustainable use. Marine protected areas are areas of intertidal or subtidal terrain--and overlying water and associated flora and fauna and historical and cultural features--that have been reserved by law or other effective means to protect part or all of the enclosed environment. Sites protected under local or provincial law are excluded.",
+  "Ease of doing business ranks economies from 1 to 190, with first place being the best. A high ranking (a low numerical rank) means that the regulatory environment is conducive to business operation. The index averages the country's percentile rankings on 10 topics covered in the World Bank's Doing Business. The ranking on each topic is the simple average of the percentile rankings on its component indicators.",
+  "The public sector management and institutions cluster includes property rights and rule-based governance, quality of budgetary and financial management, efficiency of revenue mobilization, quality of public administration, and transparency, accountability, and corruption in the public sector.",
+  "Paved roads are those surfaced with crushed stone (macadam) and hydrocarbon binder or bituminized agents, with concrete, or with cobblestones, as a percentage of all the country's roads, measured in length.",
+  "Agriculture corresponds to ISIC divisions 1-5 and includes forestry, hunting, and fishing, as well as cultivation of crops and livestock production. Value added is the net output of a sector after adding up all outputs and subtracting intermediate inputs. It is calculated without making deductions for depreciation of fabricated assets or depletion and degradation of natural resources. The origin of value added is determined by the International Standard Industrial Classification (ISIC), revision 3. Note: For VAB countries, gross value added at factor cost is used as the denominator.",
+  "Gender parity index for gross enrollment ratio in primary and secondary education is the ratio of girls to boys enrolled at primary and secondary levels in public and private schools.",
+  "Primary completion rate, or gross intake ratio to the last grade of primary education, is the number of new entrants (enrollments minus repeaters) in the last grade of primary education, regardless of age, divided by the population at the entrance age for the last grade of primary education. Data limitations preclude adjusting for students who drop out during the final year of primary education.",
+  "Under-five mortality rate is the probability per 1,000 that a newborn baby will die before reaching age five, if subject to age-specific mortality rates of the specified year.",
+  "Community health workers include various types of community health aides, many with country-specific occupational titles such as community health officers, community health-education workers, family health workers, lady health visitors and health extension package workers.",
+  "Prevalence of underweight children is the percentage of children under age 5 whose weight for age is more than two standard deviations below the median for the international reference population ages 0-59 months. The data are based on the WHO's child growth standards released in 2006.",
+  "Poverty headcount ratio at $1.90 a day is the percentage of the population living on less than $1.90 a day at 2011 international prices. As a result of revisions in PPP exchange rates, poverty rates for individual countries cannot be compared with poverty rates reported in earlier editions.",
+  "Annual population growth rate for year t is the exponential rate of growth of midyear population from year t-1 to t, expressed as a percentage. Population is based on the de facto definition of population, which counts all residents regardless of legal status or citizenship.",
+  "Total population is based on the de facto definition of population, which counts all residents regardless of legal status or citizenship. The values shown are midyear estimates.",
+  "Urban population refers to people living in urban areas as defined by national statistical offices. It is calculated using World Bank population estimates and urban ratios from the United Nations World Urbanization Prospects.",
+  "Urban population refers to people living in urban areas as defined by national statistical offices. It is calculated using World Bank population estimates and urban ratios from the United Nations World Urbanization Prospects. Aggregation of urban and rural population may not add up to total population because of different country coverages.",
+  "Urban population refers to people living in urban areas as defined by national statistical offices. The data are collected and smoothed by United Nations Population Division."),
+  
+  Variable_Type = variable_types,
+  Missing_Values = missing_counts
+)
+
+# Create a table
+variable_info %>%
+  kable("html") %>%
+  kable_styling(full_width = FALSE)
+```
+_Table 1. Dataset summary_
+
+The variables except isoc3, country and Population, total, have missing data for some observations.In total, 3238 observations have at least one missing value across variables.
+
+### Data Preprocessing
+Before conducting the analysis, we performed some data pre-processing. This included handling missing values, removing duplicates and selecting specific indicators for analysis.
+
+Here is the structure of the dataset before pre processing.
+```{r}
+#structure of dataset
+str(climateData)
+```
+#### Handling Missing Values
+It is important to identify any missing values in the dataset before the analysis.The next step is handling these missing values. This should be done after a thorough analysis of the dataset as it might cause false interpretations of the dataset and loss of information.
+
+Replacing missing values (NA) with zeros (0) can be suitable in some cases, but it really depends on the context and the nature of your data,In this analysis, missing values were handled by imputing the mean value for numerical variables, as on the context of my study and since the dataset represent climate change indicator values which cannot be zero.Replacing NA with zeros can mask the fact that climate data is missing. Since missing data is significant, I have imputed them with mean value.
+However,for three of the indicators which I have used in my study the imputing will interpret information differently and may results in anomalies. So that I have removed the records with missing values only for those indicator columns, "AG.LND.AGRI.ZS", "AG.LND.ARBL.ZS", "AG.LND.IRIG.AG.ZS" which are key response variables in my study.
+
+_Note: In order to impute the missing values with mean, I have converted the non numerical data(integer data) into numeric using a function convertToNum._
+
+```{r}
+#load relevant libraries
+library(ggplot2)
+library( naniar )
+library(tidyverse)
+library(mice)
+library(dplyr)
+
+#check for missing values
+sum(is.na(climateData))
+colSums(is.na(climateData))
+
+```
+```{r}
+# Check for records with non NA values for columns "AG.LND.AGRI.ZS", "AG.LND.ARBL.ZS", "AG.LND.IRIG.AG.ZS"
+complete_cases <- complete.cases(climateData[, c( "AG.LND.AGRI.ZS", "AG.LND.ARBL.ZS")])
+
+# Subset the data frame to omit NA records
+climateData <- climateData[complete_cases, ]
+```
+
+Here shows the visualization of the missing values.
+
+Below is a plot of cases (rows) with missing data. Each row is represented as a horizontal line, and the length of the line corresponds to the number of missing values in that case.
+```{r}
+#visualization of missing values
+gg_miss_case(climateData)
+
+```
+
+Below plot visualize missing data in a specific factor variable (country) in the dataset
+```{r}
+gg_miss_fct(x = climateData, fct = country)
+
+```
+
+Below shows a mosaic plot that represents the presence or absence of missing data across all variables in the dataset. Each row in the plot represents a variable, and each column represents a case (row). Filled cells indicate the presence of data, while empty cells represent missing data.
+```{r}
+vis_miss(climateData)
+
+```
+
+Below plot visualizes intersections of missing data across multiple variables (columns).
+```{r}
+gg_miss_upset(climateData, nsets = 20)
+```
+
+Converted the non numerical data(integer data) into numeric using a function convertToNum.
+```{r}
+#converted the non numerical data(integer data) into numeric
+convertToNum <-function(column){
+  if(class(column)=="integer"){
+    return(as.numeric(column))
+  } else {
+    return(column)
+  }
+}
+
+#NA replace with mean value
+c.d<- lapply(climateData, convertToNum)
+
+mean_values <- sapply(c.d[-1],mean, na.rm=TRUE)
+
+climateData[-1] <- lapply(c.d[-1], function(x) ifelse(is.na(x), mean_values, x))
+head(climateData)
+
+```
+
+#### Removing Unnecessary columns
+The whole set of indicators given in the dataset does not relevant to my study on assessing the agricultural sustainability of Australia in the context of climate change indicators. Thus, I have removed the unnecessary columns from the dataset while retaining the most important indicators for my study.
+These indicators are essential for assessing the climate-related characteristics of different countries, and the analysis of this data can potentially give some useful insights for my study.
+
+```{r}
+#remove unnecessary columns
+climateData_new <- climateData[,c("country", "AG.LND.AGRI.ZS", "AG.LND.ARBL.ZS", 
+                                       "AG.LND.IRIG.AG.ZS", "AG.LND.PRCP.MM","AG.YLD.CREL.KG", 
+                                       "EG.ELC.HYRO.ZS", "EG.ELC.RNEW.ZS","EG.ELC.RNWX.ZS",
+                                       "EG.FEC.RNEW.ZS", "EN.ATM.CO2E.GF.KT", "EN.ATM.CO2E.KT", "EN.ATM.CO2E.LF.KT",
+                                       "EN.ATM.CO2E.SF.KT", "EN.ATM.METH.KT.CE", "EN.ATM.NOXE.KT.CE", "EN.CLC.MDAT.ZS","NV.AGR.TOTL.ZS")]
+
+#checked new dataset for any missing data
+gg_miss_fct(x = climateData_new, fct = country)
+
+```
+#### Removing duplicates
+
+Checked for any duplicates and if any, they were removed.
+
+```{r}
+#duplicates
+duplicated(climateData)
+#find dxuplicates
+dim(climateData[duplicated(climateData)])
+```
+There were no duplicates in the dataset.
+
+#### Outliers
+Outliers, if present, were identified.
+
+```{r}
+boxplot(climateData_new[-1])
+
+```
+
+Below shows a snapshot of the new dataset after pre processing.
+```{r}
+head(climateData_new)
+
+#converted to a dataframe for the further analysis
+climateData_df <- data.frame(climateData_new)
+
+```
+
+## Methodology
+
+In this section, I have outlined the statistical learning methods employed to process and analyze the data in the context of my study.
+Initially the following illustrate the relationship between "Agricultural land (% of land area)" with "Arable land (% of land area)". This comparison allows us to understand the relationship between total agricultural land and land specifically used for crops.
+
+```{r}
+#compare compare the "Agricultural land (% of land area)" with "Arable land (% of land area)" to understand the relationship between total agricultural 
+#land and land specifically used for crops in differebt countries.
+ggplot(climateData_df, aes(x = AG.LND.AGRI.ZS, y = AG.LND.ARBL.ZS)) +
+  geom_point() +
+  geom_text(aes(label = country), hjust = 1, vjust = 1) +
+  labs(
+    x = "Agricultural Land (% of Land Area)",
+    y = "Arable Land (% of Land Area)",
+    title = "Relationship Between Total Agricultural Land and Arable Land",
+  )
+```
+###### Interpretation and Discussion
+Plot from the comparison between "Agricultural land (% of land area)" with "Arable land (% of land area)" indicates that there is a significant relationship between these two indicators and every country used to have a land specifically assigned for crop farming. Arable land grows with Agricultural land which has been assigned for a particular country from its total land area.
+
+Below analysis shows a comparison of the global climate change indicator values of Australia with selected countries which shows a reasonable interest towards agricultural field in recent ages. Since the study focus on Australia, following visualization will give a brief overview on the position of Australia in the world regarding agricultural sustainability.
+```{r}
+summary(climateData_df[climateData_df$country == "Australia", ])
+
+```
+Comparison of Australia with other set of countries
+
+```{r}
+
+#bar chart comparing Australia to a few countries
+countries_to_compare <- c("Australia","United Arab Emirates", "Brazil", "China", "Germany", "France", "United Kingdom", "India", "Israel", "Japan", "Sri Lanka", "Malaysia", "Netherlands", "New Zealand", "Pakistan", "Philippines", "Russian Federation", "Saudi Arabia", "Singapore", "Sweden", "United States")
+
+comparison_data <- climateData_df[climateData_df$country %in% countries_to_compare, ]
+ggplot(comparison_data, aes(x = country, y = AG.LND.AGRI.ZS)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Comparison of Agricultural Sustainability Indicators")
+```
+######Interpretation and Discussion
+In the context of the  above study, Australia which the pioneer focus of the study which assess its agricultural sustainability, indicates that country has about 50% of land area for agriculture. This indicates a good sign for its agricultural sustainability.
+
+#### Explotary Data Analysis
+
+##### Correlation Analysis
+
+Following code shows the calculation for correlations between different indicators to identify relationships between indicators.
+```{r}
+# Calculate correlation matrix
+(correlation_matrix <- cor(climateData_df[-1], use = "complete.obs"))
+
+```
+###### Interpretation and Discussion
+From the correlation analysis, the study was able to agree on the following insights.
+
+1.There is a very strong positive correlation (approximately 0.999995) between the percentage of agricultural land (AG.LND.AGRI.ZS) and the percentage of electricity generated from hydroelectric power (EG.ELC.HYRO.ZS). This indicates that countries with more agricultural land tend to produce a higher proportion of their electricity from hydroelectric sources.
+
+2.There is a moderately strong negative correlation (approximately -0.0427) between agricultural land and the percentage of electricity generated from renewable sources (EG.ELC.RNEW.ZS). This implies that a countries with more agricultural land may have a slightly lower percentage of electricity from renewable sources.
+
+3.The variables related to renewable energy (EG.ELC.RNEW.ZS) have negative correlations with various carbon emissions indicators (EN.ATM.CO2E.GF.KT, EN.ATM.CO2E.KT, EN.ATM.CO2E.LF.KT, and EN.ATM.CO2E.SF.KT). This means that countries with higher renewable energy generation tend to have lower carbon emissions from different sources.
+
+4.There is a very strong positive correlation (approximately 0.999995) between the percentage of irrigated agricultural land (AG.LND.IRIG.AG.ZS) and the percentage of electricity generated from hydroelectric power (EG.ELC.HYRO.ZS). This implies a close relationship between the extent of irrigated agricultural land and hydroelectric power generation.
+
+5.There is a negative correlation between the percentage of agricultural land and methane emissions, although it's relatively weak (approximately -0.0058). This indicates that regions with larger areas of agricultural land may have slightly lower methane emissions.
+
+6.There is a weak positive correlation (approximately 0.0061) between agricultural land and nitrogen oxide emissions. This suggests that regions with more agricultural land may have slightly higher nitrogen oxide emissions.
+
+##### Heatmap for correlation
+
+```{r fig.align="center"}
+
+# Visualize correlation matrix
+corrplot(correlation_matrix, method = "color")
+```
+
+
+##### Multiple Linear Regression with Regularisation
+
+Following regression analysis was conducted in order to assess the relationship between percentage of arable land, percentage of agricultural land and irrigation land with other indicators and how they impact on these key response variables.
+
+###### Fitting the linear model for response variables: "AG.LND.AGRI.ZS": Agricultural land (% of land area)
+
+```{r}
+climate.lm <-lm(formula = climateData_df$AG.LND.AGRI.ZS ~ climateData_df$AG.LND.PRCP.MM+climateData_df$AG.YLD.CREL.KG+climateData_df$EG.ELC.HYRO.ZS+
+                  climateData_df$EG.ELC.RNEW.ZS+climateData_df$EG.ELC.RNWX.ZS+climateData_df$EG.FEC.RNEW.ZS+climateData_df$EN.ATM.CO2E.GF.KT+
+                  climateData_df$EN.ATM.CO2E.KT+climateData_df$EN.ATM.CO2E.LF.KT+climateData_df$EN.ATM.CO2E.SF.KT+climateData_df$EN.ATM.METH.KT.CE+
+                  climateData_df$EN.ATM.NOXE.KT.CE+climateData_df$EN.CLC.MDAT.ZS+climateData_df$NV.AGR.TOTL.ZS, data = climateData_df)
+
+summary(climate.lm)
+
+```
+###### Interpretation and Discussion
+The F-statistic is 2.583, with a p-value of 0.00304, indicating that the model as a whole is statistically significant. But the R-squared value relatively low which is 0.1548, which means model perform relatively low with the given predictors. However, Average precipitation in depth (mm per year),Electricity production from hydroelectric sources (% of total), Renewable energy consumption (% of total final energy consumption) and Agriculture, forestry, and fishing, value added (% of GDP) have significant impact on agricultural land.
+This means annual precipitation of a country, renewable energy consumption and hydroelectric generation of a country has a significant affect for the growth of agricultural land.This imply that increased precipitation is linked to reduced agricultural land use, areas relying more on hydropower have less agricultural land use and that a greater reliance on renewable energy sources is associated with more agricultural land use.
+
+
+##### Residuals Plot for the model
+
+A diagnostic plot of the residuals is:
+
+```{r}
+plot(climate.lm, which = 1)
+```
+The residual plot shows a few outliers, more noticeably observations 32, 100 and 168, which may impose some distortion but are not critical because the linear relationship is very clear/strong. 
+
+Apply Ridge Regression by calling function glmnet().This function requires that we provide the response variable Y separated from a data matrix X with the predictors. To build this matrix X more easily, just using the linear regression formula and the dataset, we can call function model.matrix():
+
+
+```{r}
+library (glmnet)
+
+predictors <- model.matrix(climateData_df$AG.LND.AGRI.ZS ~ climateData_df$AG.LND.PRCP.MM+climateData_df$AG.YLD.CREL.KG+climateData_df$EG.ELC.HYRO.ZS+
+                             climateData_df$EG.ELC.RNEW.ZS+climateData_df$EG.ELC.RNWX.ZS+climateData_df$EG.FEC.RNEW.ZS+climateData_df$EN.ATM.CO2E.GF.KT+
+                             climateData_df$EN.ATM.CO2E.KT+climateData_df$EN.ATM.CO2E.LF.KT+climateData_df$EN.ATM.CO2E.SF.KT+climateData_df$EN.ATM.METH.KT.CE+
+                             climateData_df$EN.ATM.NOXE.KT.CE+climateData_df$EN.CLC.MDAT.ZS+climateData_df$NV.AGR.TOTL.ZS ,
+                  data = climateData_df)
+#contain Na values
+rows_to_omit <- c(1, 79, 157)
+
+response <- climateData_df$AG.LND.AGRI.ZS
+response <- response[-rows_to_omit]
+predictors <- predictors[,-1] # Remove the first column
+
+#predictors
+
+# apply ridge with alpha 0
+ridge = glmnet(predictors,response,alpha=0)
+plot(ridge,label=TRUE)
+```
+In this plot as lambda increases, the coefficients are shrunk towards zero and, accordingly, their L1 norm decreases. So, the way we read this plot is from right to left: L1 norm decreasing, lambda increasing, coefficients shrinking. The top bar indicates the number of non-zero coefficients (excluded the intercept).
+
+We need to choose one model. We can archive this using cross-validation (CV). We can run CV for Ridge Regression by calling function cv.glmnet().
+
+```{r}
+cv_ridge = cv.glmnet(predictors,response,alpha=0)
+cv_ridge
+```
+
+We can visualize it as,
+
+```{r}
+plot(cv_ridge)
+
+```
+
+Above plot, the red dots are the test Mean Squared Error (MSE) for the corresponding model — i.e., the model with the given lambda value in the x-axis — as estimated by CV. The model corresponding to the minimum MSE is indicated by the leftmost dotted vertical line. The rightmost dotted vertical line indicates the model with the largest value of lambda for which the MSE is not above one standard error from the minimum. 
+
+Check the values of lambda corresponding to these two models (i.e., the ones indicated by the vertical dotted lines) as follows:
+
+```{r}
+cv_ridge$lambda.min
+
+```
+
+```{r}
+cv_ridge$lambda.1se
+
+```
+
+Corresponding coefficients for the each of the above model:
+
+```{r}
+#The coefficients for each model can be checked as follows. S is for lambda
+coef(cv_ridge, s = cv_ridge$lambda.min)
+```
+
+```{r}
+coef(cv_ridge, s = cv_ridge$lambda.1se) 
+
+```
+
+In this case we choose the model with lambda.1se which is the  model with the largest value of lambda for which the MSE is not above one standard error from the minimum.The reason is within this analysis my aim is to interpret the results rather than predicting. So I have chosen the model with lambda.1se for my analysis.
+
+Next, similarly we have perform lasso regression with alpha =1.
+
+```{r}
+#lasso
+lasso <- glmnet(predictors,response,alpha=1)
+plot(lasso,label=TRUE)
+
+```
+
+```{r}
+cv_lasso = cv.glmnet(predictors,response,alpha=1)
+plot(cv_lasso)
+
+```
+
+```{r}
+cv_lasso$lambda.min
+```
+
+```{r}
+cv_lasso$lambda.1se
+```
+
+Similar to ridge with also lasso I have chosen lamda.1se, 
+```{r}
+coef(cv_lasso)
+
+```
+
+Compare the best cross-validated MSE achieved for Ridge Regression and the Lasso.
+```{r}
+min(cv_ridge$cvm)
+```
+
+```{r}
+min(cv_lasso$cvm)
+```
+
+Comparing the best cross-validated MSE achieved for Ridge Regression and the Lasso, we can see that the Lasso achieves a smaller estimated error.
+
+
+###### Fitting the linear model for response variables: "AG.LND.ARBL.ZS": Arable land (% of land area)
+
+```{r}
+climate_arable.lm <-lm(formula = climateData_df$AG.LND.ARBL.ZS ~ climateData_df$AG.LND.PRCP.MM+climateData_df$AG.YLD.CREL.KG+climateData_df$EG.ELC.HYRO.ZS+
+                  climateData_df$EG.ELC.RNEW.ZS+climateData_df$EG.ELC.RNWX.ZS+climateData_df$EG.FEC.RNEW.ZS+climateData_df$EN.ATM.CO2E.GF.KT+
+                  climateData_df$EN.ATM.CO2E.KT+climateData_df$EN.ATM.CO2E.LF.KT+climateData_df$EN.ATM.CO2E.SF.KT+climateData_df$EN.ATM.METH.KT.CE+
+                  climateData_df$EN.ATM.NOXE.KT.CE+climateData_df$EN.CLC.MDAT.ZS+climateData_df$NV.AGR.TOTL.ZS, data = climateData_df)
+
+summary(climate_arable.lm)
+
+```
+###### Interpretation and Discussion
+The F-statistic is 2.228, with a p-value of 0.01079, indicating that the model as a whole is statistically significant. But the R-squared value relatively low which is 0.1227, which means model perform relatively low with the given predictors. However, Electricity production from hydroelectric sources (% of total), Renewable electricity output have significant impact on arable land.
+This means that factors like electricity generation from hydropower, renewable energy, and renewable fertilizer consumption are associated with arable land.Negative correlation indicates that areas relying more on hydropower have less arable land.A positive coefficient (1.822e-01) suggests that a higher percentage of electricity generation from renewable sources is associated with an increase in "climateData_df$AG.LND.ARBL.ZS," indicating that a greater reliance on renewable energy sources is associated with more arable land.A positive coefficient (1.554e-01) indicates that a higher percentage of fertilizer consumption from renewable sources is associated with more arable land. This may suggest that sustainable agricultural practices are associated with greater arable land.
+
+
+Residuals Plot for the model
+
+A diagnostic plot of the residuals is:
+
+```{r}
+plot(climate_arable.lm, which = 1)
+```
+The residual plot shows a few outliers, more noticeably observations 18, 190 and 202, which may impose some distortion but are not critical because the linear relationship is very clear/strong. 
+
+Apply Ridge Regression by calling function glmnet().This function requires that we provide the response variable Y separated from a data matrix X with the predictors. To build this matrix X more easily, just using the linear regression formula and the dataset, we can call function model.matrix():
+
+```{r}
+predictors <- model.matrix(climateData_df$AG.LND.ARBL.ZS ~ climateData_df$AG.LND.PRCP.MM+climateData_df$AG.YLD.CREL.KG+climateData_df$EG.ELC.HYRO.ZS+
+                             climateData_df$EG.ELC.RNEW.ZS+climateData_df$EG.ELC.RNWX.ZS+climateData_df$EG.FEC.RNEW.ZS+climateData_df$EN.ATM.CO2E.GF.KT+
+                             climateData_df$EN.ATM.CO2E.KT+climateData_df$EN.ATM.CO2E.LF.KT+climateData_df$EN.ATM.CO2E.SF.KT+climateData_df$EN.ATM.METH.KT.CE+
+                             climateData_df$EN.ATM.NOXE.KT.CE+climateData_df$EN.CLC.MDAT.ZS+climateData_df$NV.AGR.TOTL.ZS,
+                           data = climateData_df)
+
+predictors <- predictors[,-1] # Remove the first column
+
+#contain Na values
+rows_to_omit <- c(1, 79, 157)
+
+response <- climateData_df$AG.LND.AGRI.ZS
+response <- response[-rows_to_omit]
+
+# apply ridge with alpha 0
+ridge = glmnet(predictors,response,alpha=0)
+plot(ridge,label=TRUE)
+```
+
+We need to choose one model. We can archive this using cross-validation (CV). We can run CV for Ridge Regression by calling function cv.glmnet().
+
+```{r}
+cv_ridge = cv.glmnet(predictors,response,alpha=0)
+cv_ridge
+```
+
+We can visualize it as,
+
+```{r}
+plot(cv_ridge)
+
+```
+
+Above plot, the red dots are the test Mean Squared Error (MSE) for the corresponding model — i.e., the model with the given lambda value in the x-axis — as estimated by CV. The model corresponding to the minimum MSE is indicated by the leftmost dotted vertical line. The rightmost dotted vertical line indicates the model with the largest value of lambda for which the MSE is not above one standard error from the minimum. 
+
+Check the values of lambda corresponding to these two models (i.e., the ones indicated by the vertical dotted lines) as follows:
+
+```{r}
+cv_ridge$lambda.min
+
+```
+
+```{r}
+cv_ridge$lambda.1se
+
+```
+
+Corresponding coefficients for the each of the above model:
+
+```{r}
+#The coefficients for each model can be checked as follows. S is for lambda
+coef(cv_ridge, s = cv_ridge$lambda.min)
+```
+
+```{r}
+coef(cv_ridge, s = cv_ridge$lambda.1se) 
+
+```
+
+In this case we choose the model with lambda.1se which is the  model with the largest value of lambda for which the MSE is not above one standard error from the minimum.The reason is within this analysis my aim is to interpret the results rather than predicting. So I have chosen the model with lambda.1se for my analysis.
+
+Next, similarly we have perform lasso regression with alpha =1.
+
+```{r}
+#lasso
+lasso <- glmnet(predictors,response,alpha=1)
+plot(lasso,label=TRUE)
+
+```
+
+```{r}
+cv_lasso = cv.glmnet(predictors,response,alpha=1)
+plot(cv_lasso)
+
+```
+
+```{r}
+cv_lasso$lambda.min
+```
+
+```{r}
+cv_lasso$lambda.1se
+```
+
+Similar to ridge with also lasso I have chosen lamda.1se, 
+```{r}
+coef(cv_lasso)
+
+```
+
+Compare the best cross-validated MSE achieved for Ridge Regression and the Lasso.
+```{r}
+min(cv_ridge$cvm)
+```
+
+```{r}
+min(cv_lasso$cvm)
+```
+
+Comparing the best cross-validated MSE achieved for Ridge Regression and the Lasso, we can see that the Lasso achieves a smaller estimated error.
+
+
+###### Fitting the linear model for response variables: "AG.LND.IRIG.AG.ZS: Agricultural irrigated land (% of total agricultural land)
+
+```{r}
+climate.lm <-lm(formula = climateData_df$AG.LND.IRIG.AG.ZS ~ climateData_df$AG.LND.PRCP.MM+climateData_df$AG.YLD.CREL.KG+climateData_df$EG.ELC.HYRO.ZS+
+                  climateData_df$EG.ELC.RNEW.ZS+climateData_df$EG.ELC.RNWX.ZS+climateData_df$EG.FEC.RNEW.ZS+climateData_df$EN.ATM.CO2E.GF.KT+
+                  climateData_df$EN.ATM.CO2E.KT+climateData_df$EN.ATM.CO2E.LF.KT+climateData_df$EN.ATM.CO2E.SF.KT+climateData_df$EN.ATM.METH.KT.CE+
+                  climateData_df$EN.ATM.NOXE.KT.CE+climateData_df$EN.CLC.MDAT.ZS+climateData_df$NV.AGR.TOTL.ZS, data = climateData_df)
+summary(climate.lm)
+```
+###### Interpretation and Discussion
+The the F-statistic is 1.467, with a p-value of 0.1356, indicating that the model is not statistically significant with siginificance level 0.05.The regression model suggests that cereal yield and metadata completeness for environmental data are associated with the percentage of irrigated agricultural land for some extent. 
+
+Apply Ridge Regression by calling function glmnet().This function requires that we provide the response variable Y separated from a data matrix X with the predictors. To build this matrix X more easily, just using the linear regression formula and the dataset, we can call function model.matrix():
+
+```{r}
+predictors <- model.matrix(climateData_df$AG.LND.IRIG.AG.ZS ~ climateData_df$AG.LND.PRCP.MM+climateData_df$AG.YLD.CREL.KG+climateData_df$EG.ELC.HYRO.ZS+
+                             climateData_df$EG.ELC.RNEW.ZS+climateData_df$EG.ELC.RNWX.ZS+climateData_df$EG.FEC.RNEW.ZS+climateData_df$EN.ATM.CO2E.GF.KT+
+                             climateData_df$EN.ATM.CO2E.KT+climateData_df$EN.ATM.CO2E.LF.KT+climateData_df$EN.ATM.CO2E.SF.KT+climateData_df$EN.ATM.METH.KT.CE+
+                             climateData_df$EN.ATM.NOXE.KT.CE+climateData_df$EN.CLC.MDAT.ZS+climateData_df$NV.AGR.TOTL.ZS,
+                           data = climateData_df)
+
+predictors <- predictors[,-1] # Remove the first column
+
+#contain Na values
+rows_to_omit <- c(1, 79, 157)
+
+response <- climateData_df$AG.LND.AGRI.ZS
+response <- response[-rows_to_omit]
+
+# apply ridge with alpha 0
+ridge = glmnet(predictors,response,alpha=0)
+plot(ridge,label=TRUE)
+```
+
+We need to choose one model. We can archive this using cross-validation (CV). We can run CV for Ridge Regression by calling function cv.glmnet().
+
+```{r}
+cv_ridge = cv.glmnet(predictors,response,alpha=0)
+cv_ridge
+```
+
+We can visualize it as,
+
+```{r}
+plot(cv_ridge)
+
+```
+
+Above plot, the red dots are the test Mean Squared Error (MSE) for the corresponding model — i.e., the model with the given lambda value in the x-axis — as estimated by CV. The model corresponding to the minimum MSE is indicated by the leftmost dotted vertical line. The rightmost dotted vertical line indicates the model with the largest value of lambda for which the MSE is not above one standard error from the minimum. 
+
+Check the values of lambda corresponding to these two models (i.e., the ones indicated by the vertical dotted lines) as follows:
+
+```{r}
+cv_ridge$lambda.min
+
+```
+
+```{r}
+cv_ridge$lambda.1se
+
+```
+
+Corresponding coefficients for the each of the above model:
+
+```{r}
+#The coefficients for each model can be checked as follows. S is for lambda
+coef(cv_ridge, s = cv_ridge$lambda.min)
+```
+
+```{r}
+coef(cv_ridge, s = cv_ridge$lambda.1se) 
+
+```
+
+In this case we choose the model with lambda.1se which is the  model with the largest value of lambda for which the MSE is not above one standard error from the minimum.The reason is within this analysis my aim is to interpret the results rather than predicting. So I have chosen the model with lambda.1se for my analysis.
+
+Next, similarly we have perform lasso regression with alpha =1.
+
+```{r}
+#lasso
+lasso <- glmnet(predictors,response,alpha=1)
+plot(lasso,label=TRUE)
+
+```
+
+```{r}
+cv_lasso = cv.glmnet(predictors,response,alpha=1)
+plot(cv_lasso)
+
+```
+
+```{r}
+cv_lasso$lambda.min
+```
+
+```{r}
+cv_lasso$lambda.1se
+```
+
+Similar to ridge with also lasso I have chosen lamda.1se, 
+```{r}
+coef(cv_lasso)
+
+```
+
+Compare the best cross-validated MSE achieved for Ridge Regression and the Lasso.
+```{r}
+min(cv_ridge$cvm)
+```
+
+```{r}
+min(cv_lasso$cvm)
+```
+
+Comparing the best cross-validated MSE achieved for Ridge Regression and the Lasso, we can see that the Lasso achieves a smaller estimated error.
+
+#### Cluster Analysis
+
+Following analysis explores whether there are clusters or groups of countries with similar climate and sustainability patterns.
+
+##### Carry out hierarchical clustering with SL, CL, AL, and Ward’s
+
+```{r}
+climateData_df<- na.omit(climateData_df)
+# Make a dissimiliarity matrix:
+climateData.d <- dist(climateData_df[-1], method = "euclidean")
+# Cluster the data using hclust():
+c.h.s <- hclust(climateData.d,method="single")
+c.h.c <- hclust(climateData.d,method="complete")
+c.h.a <- hclust(climateData.d,method="average")
+c.h.w <- hclust(climateData.d,method="ward.D2")
+```
+
+##### Plot dendograms for SL, CL, AL and Wards
+
+```{r fig.align="center"}
+plot(c.h.s, main = "Single-Linkage", xlab = "", sub = "", hang = -1)
+```
+
+```{r fig.align="center"}
+plot(c.h.c, main = "Complete-Linkage", xlab = "", sub = "", hang = -1)
+```
+
+```{r fig.align="center"}
+plot(c.h.a, main = "Average-Linkage", xlab = "", sub = "", hang = -1)
+```
+
+```{r}
+plot(c.h.w, main = "Ward’s", xlab = "", sub = "", hang = -1)
+```
+
+##### Choose a number of clusters to cut the tree
+
+Above algorithms produce dendrogram structures with more noticeable major clusters composed of subclusters.At a first glance, these dendrograms seem to suggest that a reasonable cut could be at about 4 clusters.
+
+Using Silhouette Width Criterion (SWC) choose a number of cluster to cut the tree.
+In the following we perform a cut with k = 2, 3, 4, 5 and 6 and use the silhouette to assess Ward’s results:
+
+```{r}
+
+require(dplyr)
+Wards_2clusters = cutree(tree = c.h.w, k = 2)
+Wards_3clusters = cutree(tree = c.h.w, k = 3)
+Wards_4clusters = cutree(tree = c.h.w, k = 4)
+Wards_5clusters = cutree(tree = c.h.w, k = 5)
+Wards_6clusters = cutree(tree = c.h.w, k = 6)
+
+SWC <- function(clusterLabels, distanceMatrix){
+  require(cluster)
+  sil <- silhouette(x = clusterLabels, dist = distanceMatrix)
+  return(mean(sil[,3]))
+}
+#k=2
+(SWC_Wards2 <- SWC(clusterLabels = Wards_2clusters, dist = climateData.d))
+
+```
+
+```{r}
+#k=3
+( SWC_Wards3 <- SWC(clusterLabels = Wards_3clusters, dist = climateData.d) )
+```
+
+```{r}
+#k=4
+( SWC_Wards4 <- SWC(clusterLabels = Wards_4clusters, dist = climateData.d) )
+```
+
+```{r}
+#k=5
+( SWC_Wards5 <- SWC(clusterLabels = Wards_5clusters, dist = climateData.d) )
+```
+
+```{r}
+#k=6
+( SWC_Wards6 <- SWC(clusterLabels = Wards_6clusters, dist = climateData.d) )
+```
+
+Using the above results, it can be seen that k = 2, 3 and 4 clusters exhibit better silhouette values than k = 5 and 6. 
+Thus I have used three solutions k=2, 3 and 4 for further analysis.
+
+##### Run k-means
+Created a confusion matrix using the cluster labels and run k-means using the same number of clusters as the one selected to cut the trees in the previous analysis. Then, compared the k-means findings against the cut(s) of one hierarchical technique.
+Here I have calculated sum of squared distances(SSE) for each cluster to correctly determine the number of clusters(k).
+
+```{r}
+set.seed(0)
+SSE <- rep(0, 5)
+#climateData_df<- na.omit(climateData_df)
+km2 = kmeans(climateData_df[-1], centers = 2, nstart = 30)
+SSE[2] <- km2$tot.withinss
+
+km3 = kmeans(climateData_df[-1], centers = 3, nstart = 30)
+SSE[3] <- km3$tot.withinss
+
+km4 = kmeans(climateData_df[-1], centers = 4, nstart = 30)
+SSE[4] <- km4$tot.withinss
+
+```
+
+Using the elbow method, we can determine the number of clusters (k) in K-means clustering. Plotting the sum of squared distances (SSE) for various values of k and locating a "elbow" point on the plot are the steps involved in the elbow method. The elbow point is the point on the SSE when the variance within each cluster is not appreciably reduced by adding further clusters.
+
+To determine the appropriate number of clusters, I have ploted these SSE values and look for the elbow point.
+
+```{r}
+plot(SSE, xlab="k", ylab="SSE", type = "b")
+```
+
+In order to compare with the results from Ward’s compute the confusion matrix
+
+```{r}
+( tab2 = table(km2$cluster,Wards_2clusters) )
+```
+
+```{r}
+( tab3 = table(km3$cluster,Wards_3clusters) )
+```
+
+```{r}
+( tab4 = table(km4$cluster,Wards_4clusters) )
+```
+
+From elbow method above, it was able to select two k values which could be used for further analysis. 
+
+To interpret the cluster results in the analysis, I have examined the characteristics and patterns of the clusters which I have selected before. This analysis will further able to give a correct value for number of clusters(k).
+
+Calculate the mean or median values for each variable within each cluster and create visualizations to compare the clusters for each indicator.
+
+Explore Relationships: Examine how the clusters relate to each other and what sets them apart. For example, you might find that Cluster 1 consists of countries with high agricultural yields and low CO2 emissions, while Cluster 2 has the opposite characteristics.
+
+For the below plot I have used the indicator "EN.ATM.CO2E.GF.KT":CO2 emissions from gaseous fuel consumption (kt). These plots examine how the clusters relate to each other and what sets them apart. For example, you might find that Cluster 1 consists of countries with high agricultural yields and low CO2 emissions, while Cluster 2 has the opposite characteristics.
+
+Similarly I have compared the plots for each indicator of the dataset with clusters k=2 and k=3.
+
+Below plot cluster profiles for k=2 relevant to the indicator, percentage of CO2 emissions .First cluster contains countries with higher mean value of CO2 emissions  while second cluster contains counties with low mean values.
+```{r}
+#k=2
+climateData_df$cluster <- km2$cluster
+
+(cluster_profiles <- aggregate(. ~ cluster, data = climateData_df[-1], FUN = mean))
+barplot(cluster_profiles$EN.ATM.CO2E.KT, names.arg = cluster_profiles$cluster, xlab = "Cluster", ylab = "Mean Value")
+
+```
+Same plot is created but with indicator which represent arable land percentage.
+
+```{r}
+#k=2
+climateData_df$cluster <- km2$cluster
+
+(cluster_profiles <- aggregate(. ~ cluster, data = climateData_df[-1], FUN = mean))
+barplot(cluster_profiles$AG.LND.ARBL.ZS, names.arg = cluster_profiles$cluster, xlab = "Cluster", ylab = "Mean Value")
+```
+###### Interpretation and Discussion
+The interpretation of these clusters suggests that cluster 1 might represent countries with higher CO2 emissions, a more significant share of agriculture in their GDP, and greater reliance on hydropower. In contrast, cluster 2 includes regions with higher arable land proportions, more irrigated agricultural land, and higher cereal yields, despite lower CO2 emissions.This implies that CO2 emission significantly impact on agricultural sustainability.
+
+
+Below plot cluster profiles for k=3 relevant to the indicator, percentage of CO2 emissions. Second cluster contains countries with higher mean value of CO2 emissions  while second and third clusters contains counties with low mean values.
+
+```{r}
+#k=3
+climateData_df$cluster <- km3$cluster
+
+(cluster_profiles <- aggregate(. ~ cluster, data = climateData_df[-1], FUN = mean))
+barplot(cluster_profiles$EN.ATM.CO2E.KT, names.arg = cluster_profiles$cluster, xlab = "Cluster", ylab = "Mean Value")
+```
+Same plot is created but with indicator which represent arable land percentage.
+
+```{r}
+#k=3
+climateData_df$cluster <- km3$cluster
+
+(cluster_profiles <- aggregate(. ~ cluster, data = climateData_df[-1], FUN = mean))
+barplot(cluster_profiles$AG.LND.ARBL.ZS, names.arg = cluster_profiles$cluster, xlab = "Cluster", ylab = "Mean Value")
+```
+From the above plots its is shown that clusters with k= 3, gives a better interpretation to the data as well as to my study.
+With these it is concluded that the best choice for k is 3.
+
+###### Interpretation and Discussion
+The dataset consists of three distinct clusters, each with varying agricultural and environmental factors. Cluster 1 has a significant focus on agriculture, with 40.79% of land area used for agriculture. The cluster also has a moderate emphasis on crop cultivation, with 16.47% of land classified as arable. Approximately 8.89% of agricultural land is irrigated, suggesting some investment in irrigation. The average precipitation is 1065.99 mm, providing enough water for agricultural needs.
+
+Cluster 2 has unique characteristics, with a higher percentage of arable land, lower irrigation of agricultural land, and higher precipitation. The electricity production and consumption profiles are distinct, with a focus on renewable energy, particularly wind energy. CO2 emissions are significantly higher in this cluster, suggesting a different economic and environmental profile compared to cluster 1.
+
+Cluster 3 has an average of 32.44% of land area used for agriculture, with 28.34% classified as arable. The cluster does not rely on hydropower for electricity production, with renewable energy production being relatively low. Wind energy production is relatively low in this cluster, with renewable energy consumption accounting for about 7.46% of the final energy consumption.
+
+The dataset's completeness is high, with an average of 5.48e+07 (representing a very high level of completeness). Agriculture contributes only minimally to the GDP, with an average of approximately 0.65%. These three clusters represent distinct agricultural and environmental profiles, with varying levels of agricultural focus, renewable energy utilization, emissions, and contributions of agriculture to the GDP.
+
+However according to the data provided, Australia belongs to cluster 2 which characterized with higher percentage of arable land, lower irrigation of agricultural land, and higher precipitation.Not only, CO2 emissions are significantly higher within this cluster, which means Australia might have an impact by CO2 emission for its agricultural sustainability.
+
+
+#### PCA Analysis
+
+Principal component analysis (PCA) is a classic multivariate analysis technique that is used for different purposes in the context of statistical learning, most noticeably for dimensionality
+reduction and data visualisation.
+
+##### Apply PCA for the dataset
+Here scale attribute has set to true in order to standardized the dataset.
+
+```{r}
+PCA <- prcomp(climateData_df[-1], scale = TRUE)
+PCA$rotation
+```
+
+Visualize the relationships between variables and principal components
+```{r fig.align="center"}
+biplot(PCA , scale = 1)
+```
+
+Variable sdev, which stores the standard deviation along each of the principal components derived from prcomp(), quantifies the idea of the order of principal components according to the variance of the data along the corresponding directions. The Proportion of the Variance Explained (PVE) by each component is obtained by dividing the respective variances, which are returned by the square sdevˆ2, by the total sum of variances.
+
+```{r}
+PVE <- (PCA$sdev^2)/sum(PCA$sdev^2)
+```
+
+Create a scree plot to visualize the proportion of variance explained by each principal component
+
+```{r}
+summary(PCA)
+plot(PCA, type = "l", main = "Scree Plot")
+```
+
+Here shows another visualization for proportion of variance
+Given below a plot of the proportion of variance explained by each principal component.
+
+```{r}
+plot(PVE , xlab = "Principal Component",
+     ylab = "Proportion of Variance Explained", ylim = c(0, 1),
+     type = "b")
+```
+
+Given below a plot of the cumulative proportion of variance explained.
+
+```{r}
+plot(cumsum(PVE), xlab = "Principal Component",
+     ylab = "Cumulative Proportion of Variance Explained",
+     ylim = c(0, 1), type = "b")
+```
+
+Using the above plots and data we can conclude that, PC1 explains about 29.69% of the total variance, PC2 explains about 28.37%, and PC3 explains about 9.31%. The cumulative proportion of PC2 (PC1 + PC2) is 58.06%, which means that the first two components together explain 58.06% of the total variance.Thus, majority of the variance explained by both PC1 and PC2.
+However, as you go down the list, the explained variance by each component decreases, with PC17 explaining only a very small amount of variance.
+
+Now let us pre process the dataset with PCA data with PC1 and PC2.
+
+```{r}
+#install.packages("caret")
+#install.packages("recipes")
+
+library(caret)
+pca_model <- preProcess(climateData_df[-1], method = 'pca', pcaComp = 2)
+```
+
+Then  transform the original data ("climateData_df[-1]") based on the PCA model.
+
+```{r}
+pca_data_update <- predict(pca_model, climateData_df[-1])
+pca_data_update
+```
+
+Now we can use reduced PCA dataset for outlier detection.
+
+### Outlier Detection
+
+#### Apply KNN for Outlier Detection
+
+Cluster analysis we confirmed that k=3 perform better than k=2.Thus, here I have use k=3 for outlier detection as well.
+```{r}
+#install.packages("dbscan")
+library(dbscan)
+# KNN parameter
+k <- 3
+```
+
+```{r}
+# KNN distance (outlier score) computation
+KNN_Outlier <- kNNdist(x=climateData_df[-1], k = k, all = TRUE)[,k]
+```
+
+##### Apply knn for reduced PCA dataset
+```{r}
+ # KNN distance (outlier score) computation for PCA dataset
+KNN_Outlier_pca <- kNNdist(x=pca_data_update, k = k, all = TRUE)[,k]
+```
+
+The following code sorts the observations according to their KNN Outlier scores and displays the top 50 outliers along with their scores.
+
+```{r}
+top_n <- 50 # No. of top outliers to be displayed for the original dataset
+rank_KNN_Outlier <- order(x=KNN_Outlier, decreasing = TRUE) # Sorting (descending)
+KNN_Result <- data.frame(ID = rank_KNN_Outlier, score = KNN_Outlier[rank_KNN_Outlier])
+head(KNN_Result, top_n)
+```
+
+We can see that the most outlying observation is observation 237, with outlier score = 4.42, followed by observation 208 with outlier score = 4.17, so on and so forth.
+
+```{r}
+top_n <- 50 # No. of top outliers to be displayed for the PCA dataset
+rank_KNN_Outlier <- order(x=KNN_Outlier_pca, decreasing = TRUE) # Sorting (descending)
+KNN_Result <- data.frame(ID = rank_KNN_Outlier, score = KNN_Outlier_pca[rank_KNN_Outlier])
+head(KNN_Result, top_n)
+```
+
+We can see that the most outlying observation is observation 237, with outlier score = 4.42, followed by observation 208 with outlier score = 4.17, so on and so forth.
+
+##### Plot the KNN outlier scores for both original dataset and PCA dataset.
+
+```{r fig.align="center"}
+# Create a scatterplot of KNN outlier scores
+ggplot(data = climateData_df, aes(x = 1:nrow(climateData_df), y = KNN_Outlier)) +
+  geom_point() +
+  labs(x = "Observation", y = "KNN Outlier Score", title = "KNN Outlier Scores") +
+  theme_minimal()
+```
+
+##### Visualization for KNN outlier score for PCA dataset
+
+```{r fig.align="center"}
+ggplot(data = pca_data_update, aes(x = 1:nrow(pca_data_update), y = KNN_Outlier)) +
+  geom_point() +
+  labs(x = "Observation", y = "KNN Outlier Score", title = "KNN Outlier Scores on PCA Components") +
+  theme_minimal()
+```
+## Conclusion
+
+The study examines Australia's agricultural sustainability in relation to global climate change indicators. It found a strong correlation between agricultural land and hydropower generation, suggesting increased reliance on hydropower. Renewable energy consumption and hydropower electricity production are crucial for agricultural land expansion. However, Australia's high percentage of arable land and CO2 emissions highlight areas needing attention for sustainability. The findings suggest investing in sustainable practices and renewable energy to mitigate CO2 emissions, while further research and policies may be needed to balance environmental impact. The study has limitations as it requires more in-depth research for precise recommendations.
+
+## References 
+
+Agriculture and mining - Climate Adaptation. (2016, May 5). Climate Adaptation. https://research.csiro.au/climate/themes/agriculture/
+
+Climate Change. (n.d.). World Bank. https://www.worldbank.org/en/topic/climatechange
+
+Glossary | DataBank, https://databank.worldbank.org/metadataglossary/world-development-indicators/series/
+
+Home - DAFF. (2023, October 27). https://www.agriculture.gov.au/
+
+Log in to canvas. (n.d.). https://canvas.newcastle.edu.au/courses/24134/assignments/211595
+
+Overview. (n.d.). World Bank. https://www.worldbank.org/en/topic/climatechange/overview#2
+
+Principal Component Analysis (PCA) Explained Visually with Zero Math, https://towardsdatascience.com/principal-component-analysis-pca-explained-visually-with-zero-math-1cbf392b9e7d.
+
+Who We Are. (n.d.). World Bank. https://www.worldbank.org/en/who-we-are
+
+
+
+
+
+
+
+
